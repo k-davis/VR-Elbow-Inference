@@ -1,5 +1,5 @@
 # VR Elbow Inference
-Can machine learning be used to estimate elbow location given a standard VR device? This project is an attempt to answer this question.
+Can machine learning be used to estimate elbow location within VR? This project is an attempt to answer this question.
 
 ## About
 This project is a Senior Thesis at Gonzaga University (CPSC 495, 496). Faculty Advisor: Dr. David Schroeder.
