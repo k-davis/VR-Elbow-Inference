@@ -117,8 +117,17 @@ class NTSData:
         theta = cos^-1 | --------- |
                        \ |a| * |b| /
         """
+        assert(a.shape == (3,))
+        assert(b.shape == (3,))
         dot_prod = np.dot(a, b)
         mag_prod = np.linalg.norm(a) * np.linalg.norm(b)
+
+        # resolves a floating point error issue on dot_prod
+        if(math.isclose(dot_prod, mag_prod)):
+            dot_prod = mag_prod
+        elif(math.isclose(-1 * dot_prod, mag_prod)):
+            dot_prod = -1 * mag_prod
+
         theta = math.acos(dot_prod / mag_prod)
 
         return theta
@@ -139,18 +148,24 @@ class NTSData:
         desired_forward = np.array([0., 1, 0])
 
         for frame in body_data:
-            midpoint = NTSData.get_frame_shoulder_center(frame)
-            
-            frame_forward = NTSData._get_forward_dir(frame)
-            mid_left = NTSData.get_unit_vector(frame['lclavicle']['coordinate'] - midpoint)
-            thor_up = NTSData.get_unit_vector(midpoint - frame['thorax']['coordinate'])
+            shoulder_center = NTSData.get_frame_shoulder_center(frame)
 
-            transform = np.array([mid_left, frame_forward, thor_up])
-            print('Transform')
-            print(transform)
+            frame_forward = NTSData._get_forward_dir(frame)
+            shoulder_center_down = NTSData.get_unit_vector(frame['thorax']['coordinate'] - shoulder_center)
+            left_vec = np.cross(frame_forward, shoulder_center_down)
+
+
+            transform = np.array([left_vec, frame_forward, shoulder_center_down]).T
+
+            assert(math.isclose(np.linalg.det(transform), 1.0))
             
+            if(np.all(frame['rclavicle']['coordinate'] == np.array([2, 3, 1.2]))):
+                print(frame)
+                print(transform)
+
             for joint_key in frame.keys():
                 point_vec = frame[joint_key]['coordinate']
+
                 rotated_point = np.matmul(transform, point_vec)
 
                 assert(rotated_point.shape == (3,))

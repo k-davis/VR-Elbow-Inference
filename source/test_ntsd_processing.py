@@ -60,16 +60,16 @@ class TestNTSDProcessing(unittest.TestCase):
 	def test_normalize_position_w_change(self):
 		mocap_pre = [
 			{	
-				'lclavicle': {'coordinate': np.array([2, 2, 3], dtype='float64') },
-				'rclavicle': {'coordinate': np.array([0, 2, 3], dtype='float64') },
-				'joint1': {'coordinate': np.array([0, -100.5, 63.4], dtype='float64') },
-				'joint2': {'coordinate': np.array([75, -32, 84.2], dtype='float64') },
+				'lclavicle': {'coordinate': np.array([2.0, 2, 3]) },
+				'rclavicle': {'coordinate': np.array([0.0, 2, 3]) },
+				'joint1': {'coordinate': np.array([0.0, -100.5, 63.4]) },
+				'joint2': {'coordinate': np.array([75.0, -32, 84.2]) },
 			},
 			{	
-				'lclavicle': {'coordinate': np.array([1, 2, 3], dtype='float64') },
-				'rclavicle': {'coordinate': np.array([-1, -1, 4], dtype='float64') },
-				'joint1': {'coordinate': np.array([-1, -0.5, 6.4], dtype='float64') },
-				'joint2': {'coordinate': np.array([0, 0, 0], dtype='float64') },
+				'lclavicle': {'coordinate': np.array([1.0, 2, 3]) },
+				'rclavicle': {'coordinate': np.array([-1.0, -1, 4]) },
+				'joint1': {'coordinate': np.array([-1.0, -0.5, 6.4]) },
+				'joint2': {'coordinate': np.array([0.0, 0, 0]) },
 			}
 		]
 		# mid points
@@ -132,75 +132,76 @@ class TestNTSDProcessing(unittest.TestCase):
 			actual_forward = NTSData._get_forward_dir(test_frame)
 			self.assertTrue(all(np.isclose(expected_forward, actual_forward)) , 'Test case %i \nExpected forward: \t%r\nshould match actual: \t%r ' % (idx, expected_forward, actual_forward))
 
-	def test_normalize_rotation(self):
-		# position is already normalized, ie thorax is [0, 0, 0]
-		
+	def test_normalize_rotation(self):		
 		frame = TestNTSDProcessing.build_tgff_frame
 
 		test_cases_pre = [frame([-1., 0, 1],
 								[ 1., 0, 1],
-								[ 0., 0, 0]	
+								[ 0., 0, 0.5]	
 							),
 
 						frame(	[ 4., 4, 2],
-								[ 2., 3, 1],
-								[ 0., 0, 0]
+								[ 2., 3, 1.2],
+								[ 1., 1, 0.5]
 							),
 							
 						frame(	[  4.,  4.0, 2.0],
 								[  2., -0.3, 2.4],
-								[  0.,  0,   0.0]
+								[  0.5, 1.0, 0.0]
 							),
 
 						frame( 	[ 0., -1, 1],
-								[ 0., 1, 1],
-								[ 0., 0, 0]	
-
+								[ 0.,  1, 1],
+								[ 0.,  0, 0]	
 							)
 					]
 
+		ntsdata = NTSData(None)
+		ntsdata.normalize_position(body_data=test_cases_pre)
+
 		test_cases_post = copy.deepcopy(test_cases_pre)
 
-		ntsdata = NTSData(None)
-		ntsdata.normalize_rotation(test_cases_post)
+		ntsdata.normalize_rotation(body_data=test_cases_post)
 
-		# post-conditions:
-		# !!! the clavicles have the same z !!! not really if the shoulders are different distances from thorax
-		# clavicles both have y=0
-		# !!!nope!!! clavicle x coords are inverted 
-		# thorax still at 0 0 0
-		
-		# lclav is (1, 0, 0)
 		for fr_idx, frame_pre in enumerate(test_cases_pre):
 			pre_lclav = frame_pre['lclavicle']['coordinate']
 			pre_rclav = frame_pre['rclavicle']['coordinate']
 			pre_thor =  frame_pre['thorax']['coordinate']
+			pre_shoulder_center = NTSData.get_frame_shoulder_center(frame_pre)
 
 			post_lclav = test_cases_post[fr_idx]['lclavicle']['coordinate']
 			post_rclav = test_cases_post[fr_idx]['rclavicle']['coordinate']
 			post_thor =  test_cases_post[fr_idx]['thorax']['coordinate']
+			post_shoulder_center = NTSData.get_frame_shoulder_center(test_cases_post[fr_idx])
 
-			# static assertions
-			self.assertTrue(post_lclav[1] == 0)
-			self.assertTrue(post_rclav[1] == 0)
-			self.assertTrue(all(np.isclose(post_thor, np.array([0., 0, 0]))))
+			pre_values = [pre_lclav, pre_rclav, pre_thor, pre_shoulder_center]
+			post_values = [post_lclav, post_rclav, post_thor, post_shoulder_center]
 
-			#relative assertions
+			# assertions
+			'''
+			The shoulder_center is at the origin
+			The angle between the clavicles remains constant
+			The distance between any joints remains the same
+			'''
 
+			# the shoulder_center remains at the origin
+			self.assertTrue(all(np.isclose(post_shoulder_center, np.array([0., 0, 0]))))
 
+			# the angle between the clavicles remain constant
 			angle_between_pre = NTSData._get_angle_between(pre_lclav, pre_rclav)
 			angle_between_post = NTSData._get_angle_between(post_lclav, post_rclav)
-			print("Angle pre : {}".format(angle_between_pre))
-			print("Angle post: {}".format(angle_between_post) )
 			self.assertTrue(math.isclose(angle_between_pre, angle_between_post))
 
-			print(str(np.linalg.norm(pre_lclav)) + "   " +  str(np.linalg.norm(post_lclav)))
-			print(f'{pre_lclav}    {post_lclav}')
-			self.assertTrue(math.isclose(np.linalg.norm(pre_lclav), np.linalg.norm(post_lclav)))
-			self.assertTrue(math.isclose(np.linalg.norm(pre_rclav), np.linalg.norm(post_rclav)))
-
-			
-
+			# no scaling/skewing occurs
+			#  ie, the distance between any joints remains the same
+			for idx_a in range(num := len(pre_values)):
+				for idx_b in range(num):
+					if(idx_a == idx_b):
+						break 
+					
+					pre_dist  = np.linalg.norm(pre_values[idx_a] - pre_values[idx_b])
+					post_dist = np.linalg.norm(post_values[idx_a] - post_values[idx_b])
+					self.assertTrue(math.isclose(pre_dist, post_dist), f'Expected distance to be same at idxs a: {idx_a}, b: {idx_b}; pre val: {pre_dist}; post val: {post_dist}')
 
 
 
