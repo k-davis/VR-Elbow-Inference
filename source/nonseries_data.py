@@ -2,6 +2,7 @@ import random
 import os
 import json
 import math
+from typing import List
 import numpy as np
 
 """
@@ -42,11 +43,21 @@ list of frames
 class NTSData:
     data = []
 
-    def __init__(self, folder_list):
+    def __init__(self, folder_list: List[str], joints_of_interest=None):
         # for testing w/ fake data
         if folder_list != None:
             self._read_folder(folder_list[0])
         
+        self.joints_of_interest = joints_of_interest
+
+    def do_all_processing(self, outfile):
+        self.normalize_rotation()
+        self.normalize_position()
+        self.normalize_for_bounding_box()
+        self.filter_to_labels(self.joints_of_interest)
+        self._prepare_for_serialization()
+        self._write_file(outfile)
+
     def shuffle(self):
         random.shuffle(self.data)
 
@@ -61,13 +72,14 @@ class NTSData:
         midpoint = (lshoulder_coord + rshoulder_coord) / 2
         return midpoint
             
-
     def normalize_position(self, body_data=None):
         """
             Translates every frame to have its shoulder center 
             be centered at 0, 0, 0. All other joints are translated
             the same amount
         """
+        print('Normalizing Position')
+
         # cannot do this as a default parameter since it is evaluated at runtime or something
         if body_data is None:
             body_data = self.data
@@ -142,6 +154,8 @@ class NTSData:
          for each joint's coords (and mat?)
           rotate point about origin the calc'ed amount
         """
+        print('Normalizing Rotation')
+
         if body_data == None:
             body_data = self.data
 
@@ -170,13 +184,48 @@ class NTSData:
 
                 assert(rotated_point.shape == (3,))
                 frame[joint_key]['coordinate'] = rotated_point
-        
-    
-    def normalize_height(self):
-        pass
+            
+    def normalize_for_bounding_box(self, body_data=None):
+        '''
+        All frame data is scaled and shifted to be entirely contained
+        within the space of [0, 1]^3
+        '''
+        print('Normalizing Scaling')
+        if body_data == None:
+            body_data = self.data
 
-    def normalize_bounding_box(self):
-        pass
+        bounds = {  'x': (0,0),
+                    'y': (0,0),
+                    'z': (0,0)}
+        
+        for idx in range(len(bounds)):
+            bounds[idx] = NTSData._get_bounds_of_axis(idx, body_data, self.joints_of_interest)
+
+        bound_magnitudes_list = []
+        for bound_pair in bounds.values():
+            for bound in bound_pair:
+                bound_magnitudes_list.append(abs(bound))
+        max_bound = max(bound_magnitudes_list)
+
+        for frame in body_data: 
+            for key in frame.keys():
+                # scale limiting_joints within [-0.5, 0.5]
+                frame[key]['coordinate'] = frame[key]['coordinate'] / max_bound / 2
+                # translate limiting_joints to [0, 1]
+                frame[key]['coordinate'] = frame[key]['coordinate'] + 0.5
+
+    @staticmethod
+    def _get_bounds_of_axis(axis, body_data, joints):
+        '''
+        Gets the min and max bound from the joint labels in joints
+        '''
+        points = []
+        for frame in body_data:
+            for joint_label in joints:
+                points.append(frame[joint_label]['coordinate'][axis])
+
+        return min(points), max(points)
+            
 
     def filter_to_labels(self, labels):
         for idx in range(len(self.data)):
@@ -188,6 +237,15 @@ class NTSData:
         x_data = []
         y_data = []
         
+    def _prepare_for_serialization(self):
+        for frame in self.data:
+            for joint_label in frame.keys():
+                # np ndarray's cannot be serialized into json
+                #  flatten matrixes. (This is a vector.)
+                frame[joint_label]['coordinate'] = frame[joint_label]['coordinate'].tolist()
+                frame[joint_label]['matrix'] = None
+
+    
     def _read_folder(self, folder_path):
         for file in os.listdir(folder_path):
             if file.endswith(".json"):
@@ -197,8 +255,16 @@ class NTSData:
         print("Reading: " + file_path)
         mocap_rec_data = json.load(open(file_path))
         for frame in mocap_rec_data.values():
-            for joint in frame:
+            for joint in frame.values():
                 joint['coordinate'] = np.array(joint['coordinate'], dtype='float64')
                 joint['matrix'] = np.array(joint['matrix'])
             self.data.append(frame)
     
+    def _write_file(self, outfile):
+        print('Writing to: {}'.format(outfile))
+        with open(outfile, 'w') as fp:
+            json.dump(self.data, fp)
+    
+if __name__ == '__main__':
+    ntsdata = NTSData(['mocap folders',], ['head'])
+    ntsdata.do_all_processing('80_postproc.json')
