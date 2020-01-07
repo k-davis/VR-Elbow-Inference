@@ -1,0 +1,60 @@
+Non-Time Series Data Structure
+[
+    {
+        "lfemur": {
+            "coordinate": [x,y,z],
+            "matrix": [ [a,b,c], [e,f,g], [h,i,j] ]
+        },
+        "lclavicle": {
+            "coordinate": [x,y,z],
+            "matrix": [ [a,b,c], [e,f,g], [h,i,j] ]
+        },
+        ...
+    },
+    ...
+]
+
+
+NTSData
+ 1 normalize xy position
+ 2 normalize rotation
+optional?
+ 3 normalize floor (NEW!) (Check if needed)
+ 4 normalize height
+ 5 normalize bounding box
+ 6 duplicate one side to another
+
+**Remember that all this is for normalizing for the shoulders**
+
+-1 normalize xy position
+define get_center for frame
+define desired xy
+for each frame
+ calc offset = desired - center
+ for each joint
+  translate coord by offset
+
+-2 normalize rotation
+define desired forward
+define frame rotation calculation method
+ perpindicular vector to shoulders vector, xy only
+for each frame
+ calc req rotation
+ for each joint's coords (and mat?)
+  rotate point about origin the calc'ed amount
+
+-4 normalize height
+ assuming all standing upright!
+ define get_height for frame (sum of lengths between heel joint up to head joint?)
+ over all frames
+  find biggest height
+ for each frame
+  divide all z by biggest height
+
+-5 normalize bounding box
+ from all each frame
+  collect the x y z componenets of greatest magnitude
+  
+
+
+-6 duplicate side
