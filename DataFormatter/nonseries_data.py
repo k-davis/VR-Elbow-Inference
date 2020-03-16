@@ -79,7 +79,7 @@ class NTSData:
             be centered at 0, 0, 0. All other joints are translated
             the same amount
         """
-        print("Normalizing Position")
+        print("Normalizing Position", flush=True)
 
         # cannot do this as a default parameter since it is evaluated at runtime or something
         if body_data is None:
@@ -155,7 +155,7 @@ class NTSData:
          for each joint's coords (and mat?)
           rotate point about origin the calc'ed amount
         """
-        print("Normalizing Rotation")
+        print("Normalizing Rotation", flush=True)
 
         if body_data == None:
             body_data = self.data
@@ -193,7 +193,7 @@ class NTSData:
         All frame data is scaled and shifted to be entirely contained
         within the space of [0, 1]^3
         """
-        print("Normalizing Scaling")
+        print("Normalizing Scaling", flush=True)
         if body_data == None:
             body_data = self.data
 
@@ -263,7 +263,7 @@ class NTSData:
                 self._read_file(folder_path + "\\" + file)
 
     def _read_file(self, file_path):
-        print("Reading: " + file_path)
+        print("Reading: " + file_path, flush=True)
         mocap_rec_data = json.load(open(file_path))
         for frame in mocap_rec_data.values():
             for joint in frame.values():
@@ -272,7 +272,7 @@ class NTSData:
             self.data.append(frame)
 
     def _write_file(self, outfile):
-        print("Writing to: {}".format(outfile))
+        print("Writing to: {}".format(outfile), flush=True)
         with open(outfile, "w") as fp:
             json.dump(self.data, fp)
 
@@ -313,7 +313,6 @@ ALL_JOINTS = [
 
 RELEVANT_JOINTS = [
     "thorax",
-    "lclavicle",
     "rclavicle",
     "lhumerus",
     "rhumerus",
@@ -322,8 +321,6 @@ RELEVANT_JOINTS = [
 ]
 
 if __name__ == "__main__":
-    ntsdata = NTSData(
-        ["E:/Desktop/github/VR-Elbow-Inference/mocap_data/80",], ALL_JOINTS,
-    )
-    ntsdata.do_all_processing("80_postproc.json")
+    ntsdata = NTSData(["E:/Desktop/Thesis/subject_data/80"], ALL_JOINTS)
+    ntsdata.do_all_processing("80_postproc_full.json")
 

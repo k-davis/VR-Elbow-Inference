@@ -11,8 +11,8 @@ then compaire both the input and output files.
 import peasy.*;
 import java.util.*;
 
-String preProcessedDataPath = "";
-String postProcessedDataPath = "";
+String preProcessedDataPath = "../mocap_data/80/80_20.json";
+String postProcessedDataPath = "80_postproc.json";
 
 PeasyCam cam;
 PreProcData predata;
