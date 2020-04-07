@@ -32,6 +32,9 @@ void draw() {
   noStroke(); 
   background(255);
   println(frameRate);
+  
+  translate(-scale/2, scale/2, -scale/2);
+    
   drawUtilityObjects();
   dataController.display();
 }
