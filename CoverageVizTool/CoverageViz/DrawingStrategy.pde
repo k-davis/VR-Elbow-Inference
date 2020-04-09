@@ -39,11 +39,11 @@ class PlainSpheres extends DrawingStrategy {
    }
    
    void drawBall(float x, float y, float z){
-      pushMatrix();
-      fill(255);
-      translate(scale * x, scale * y, scale * z);
-      sphere(1);
-      popMatrix();
+        pushMatrix();
+        fill(255);
+        translate(scale * x, scale * y, scale * z);
+        sphere(1);
+        popMatrix();
    }
 }
 
@@ -85,7 +85,6 @@ class Points extends DrawingStrategy {
    }
    
    void drawBall(float x, float y, float z){
-      point(scale*x, scale*y, scale*z);
-      
+       point(scale*x, scale*y, scale*z);      
    }
 }

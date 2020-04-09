@@ -3,12 +3,14 @@
 import peasy.*;
 import java.util.*;
 
+
 String postProcessedDataPath = "80_postproc_full.json";
 
 PeasyCam cam;
 float scale = 50;
 MocapData dataController;
 DrawingStrategy drawer;
+Boolean isCameraStill;
 
 void setup() {
   size(1000,1000,P3D);
@@ -34,6 +36,8 @@ void draw() {
   println(frameRate);
   
   translate(-scale/2, scale/2, -scale/2);
+  
+  cam.setWheelHandler(new MyHandler(cam.getWheelHandler()));
     
   drawUtilityObjects();
   dataController.display();
@@ -75,4 +79,18 @@ void drawUtilityObjects() {
    translate(0, 0, scale/2);
    box(1, 1, scale);
    popMatrix();
+}
+
+
+class MyHandler implements PeasyWheelHandler {
+  PeasyWheelHandler oldHandler;
+  
+  public MyHandler(PeasyWheelHandler existingHandler) {
+    oldHandler = existingHandler;
+  }
+  
+  public void handleWheel(int val) {
+    println("SCROLL " + val);
+    oldHandler.handleWheel(val);
+  }
 }
