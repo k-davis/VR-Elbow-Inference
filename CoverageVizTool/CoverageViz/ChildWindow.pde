@@ -1,5 +1,6 @@
 class ChildApplet extends PApplet {
- 
+ // UtilityDrawer utilDrawer;
+  
   public ChildApplet() {
     super();
     PApplet.runSketch(new String[]{this.getClass().getName()}, this);
@@ -10,9 +11,7 @@ class ChildApplet extends PApplet {
     smooth();
   }
   
-  public void setup() {    surface.setTitle("Viewer");
-  
-  
+  public void setup() {     surface.setTitle("Viewer");  
   }
  
   public void draw(){
