@@ -9,8 +9,11 @@ String postProcessedDataPath = "80_postproc_full.json";
 PeasyCam cam;
 float scale = 50;
 MocapData dataController;
-DrawingStrategy drawer;
+Points drawer;
 Boolean isCameraStill;
+
+String JOINT_A = "lradius";
+String JOINT_B = "lhumerus";
 
 void setup() {
   size(1000,1000,P3D);
@@ -33,15 +36,21 @@ void draw() {
   noLights();
   noStroke(); 
   background(255);
-  println(frameRate);
   
   translate(-scale/2, scale/2, -scale/2);
   
   cam.setWheelHandler(new MyHandler(cam.getWheelHandler()));
     
   drawUtilityObjects();
-  dataController.display();
+  drawer.drawPoints(dataController);
 }
+
+void keyPressed(){
+ if(key == ' '){
+   drawer.handleToggleDrawAmount(); 
+ }
+}
+
 
 void drawUtilityObjects() { 
    // draw floor plane

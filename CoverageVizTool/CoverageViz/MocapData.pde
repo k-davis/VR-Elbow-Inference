@@ -1,52 +1,44 @@
 
 class MocapData {
   int frameNum = 0;
-  Frame[] frames;
+  List<Frame> frames;
   
   MocapData(String path) {
     JSONArray dataArray = loadJSONArray(path);
-    frames = new Frame[dataArray.size()];
+    frames = new Vector<Frame>();
     
     for (int i = 0; i < dataArray.size(); i++) {
         JSONObject frameJSON = dataArray.getJSONObject(i);
         Frame fr = new Frame(frameJSON);
-        frames[i] = fr;
+        frames.add(fr);
     }
     
     adjustToProcessingCoordinates();
   }
     
   void adjustToProcessingCoordinates() {
-    for (int f = 0; f < frames.length; f++){
-      Iterator<Joint> jIter = frames[f].joints.iterator();
+    Iterator<Frame> frameIt = iterator();
+    
+    while(frameIt.hasNext()){
+      Frame curFrame = frameIt.next();
+      Iterator<Map.Entry<String, float[]>> jIter = curFrame.joints.entrySet().iterator();
+      
       while(jIter.hasNext()){
-        Joint joint = jIter.next();
-        joint.coordinates[0] = joint.coordinates[0];
-        joint.coordinates[1] = -1 * joint.coordinates[1];
-        joint.coordinates[2] = joint.coordinates[2];        
+        Map.Entry<String, float[]> joint = jIter.next();
+        joint.getValue()[1] = -1 * joint.getValue()[1];
       }
     }
-  }
+  }  
   
-  void display() {
-     for(int i = 0; i < frames.length; i++){
-       frames[i].display(); 
-     }
+  public Iterator<Frame> iterator() {
+    return frames.iterator();
   }
-  
-  Vector<Joint> aggregate(){
-    Vector<Joint> allJoints = new Vector<Joint>(); 
     
-    
-    
-    return allJoints;
-  }
-  
 }
 
 class Frame {
   // Represents an entire "body" of mocap joints
-  Set<Joint> joints = new HashSet();
+  Map<String, float[]> joints = new HashMap();
   
   Frame(JSONObject frameJSON) {
     Iterator<String> jointLabels = frameJSON.keyIterator();
@@ -56,28 +48,11 @@ class Frame {
     // takes each joint in the frameJSON and adds it to the joints
     while (jointLabels.hasNext()) {
       curJointKey = jointLabels.next();
-      curJoint = frameJSON.getJSONObject(curJointKey);
-      
-      Joint j = new Joint(curJointKey, curJoint);
-      joints.add(j);
-    }
-  }
-  
-  void display(){
-     drawer.drawDataPoint(joints);
-  }
-  
-  
-}
+      if(curJointKey.equals(JOINT_A) || curJointKey.equals(JOINT_B)){
+        curJoint = frameJSON.getJSONObject(curJointKey);
 
-public class Joint {
-  // Represents a single mocap joint
-  //  displays as a ball
-  String jointName;
-  float[] coordinates = new float[3];
-  
-  Joint(String jointName, JSONObject jointJSON) {
-    this.jointName = jointName;
-    coordinates = jointJSON.getJSONArray("coordinate").getFloatArray();
-  }
+        joints.put(curJointKey, curJoint.getJSONArray("coordinate").getFloatArray());
+      }
+    }
+  }  
 }
