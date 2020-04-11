@@ -1,8 +1,12 @@
 
 
 abstract class DrawingStrategy {
+   protected boolean shouldDrawAll = false;;
    abstract void drawPoints(MocapData data);
-  // abstract void drawDataPoint(Iterable<Joint> datapoint); 
+   
+   public void handleToggleDrawAmount(){
+      shouldDrawAll = !shouldDrawAll;
+   }
 }
 /*
 class DrawEveryPoint extends DrawingStrategy {
@@ -72,8 +76,7 @@ class SimpleSpheres extends DrawingStrategy {
 }
 */
 
-class Points extends DrawingStrategy {
-   private boolean shouldDrawAll = false;
+class DrawPoints extends DrawingStrategy {
    private float percentageToDraw = 0.2;
    private String jointFocus = JOINT_A;
    
@@ -87,13 +90,14 @@ class Points extends DrawingStrategy {
        Frame curFrame = frameIt.next();
        
        if(shouldDrawAll) {
+          drawDataPoint(curFrame); 
+          
+       } else {
          if(countCycler % countToIgnore == 0) {
            drawDataPoint(curFrame);
          }
   
          countCycler++;
-       } else {
-          drawDataPoint(curFrame); 
        }
      }
    }

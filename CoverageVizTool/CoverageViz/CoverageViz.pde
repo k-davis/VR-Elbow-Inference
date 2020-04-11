@@ -6,19 +6,28 @@ import java.util.*;
 
 String postProcessedDataPath = "80_postproc_full.json";
 
+ChildApplet child;
 PeasyCam cam;
 float scale = 50;
 MocapData dataController;
-Points drawer;
-Boolean isCameraStill;
+DrawingStrategy drawer;
+
 
 String JOINT_A = "lradius";
 String JOINT_B = "lhumerus";
 
+void settings(){
+   size(800, 800,P3D);
+   smooth();
+}
+
 void setup() {
-  size(1000,1000,P3D);
+  child = new ChildApplet();
+  
+  surface.setTitle("Controller");
+ 
   cam = new PeasyCam(this, 100);
-  cam.setMinimumDistance(50);
+  cam.setMinimumDistance(25);
   cam.setMaximumDistance(500);
   cam.setSuppressRollRotationMode();
   
@@ -29,7 +38,7 @@ void setup() {
   
   
   dataController = new MocapData(postProcessedDataPath);
-  drawer = new Points();
+  drawer = new DrawPoints();
 }
 
 void draw() {
@@ -88,18 +97,4 @@ void drawUtilityObjects() {
    translate(0, 0, scale/2);
    box(1, 1, scale);
    popMatrix();
-}
-
-
-class MyHandler implements PeasyWheelHandler {
-  PeasyWheelHandler oldHandler;
-  
-  public MyHandler(PeasyWheelHandler existingHandler) {
-    oldHandler = existingHandler;
-  }
-  
-  public void handleWheel(int val) {
-    println("SCROLL " + val);
-    oldHandler.handleWheel(val);
-  }
 }
