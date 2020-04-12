@@ -31,13 +31,17 @@ class MocapData {
   }  
   
   public Iterator<Frame> iterator() {
-    return frames.iterator();
+    Iterator<Frame> frIt = frames.iterator();
+    if(frIt == null)
+      println("Iterator resolves as null");
+    return frIt;
   }
     
 }
 
 class Frame {
   // Represents an entire "body" of mocap joints
+  //  limited here to two joints
   Map<String, float[]> joints = new HashMap();
   
   Frame(JSONObject frameJSON) {
