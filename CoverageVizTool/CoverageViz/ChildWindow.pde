@@ -8,8 +8,8 @@ class ChildApplet extends PApplet {
   }
   
   public void settings() {
-    size(400, 400, P3D);
-    smooth();
+    size(800, 800, P3D);
+    noSmooth();
   }
   
   public void setup() {
@@ -20,12 +20,13 @@ class ChildApplet extends PApplet {
  
   public void draw(){
     background(255);
+    translate(-scale/2, scale/2, -scale/2);
     viewer.draw();
   }  
   
   void keyPressed(){
     if(key == ' '){
-      viewer.handleToggleDrawAmount(); 
+      eventManager.trigger(Events.SPACE_PRESS);
     }
   }
 }

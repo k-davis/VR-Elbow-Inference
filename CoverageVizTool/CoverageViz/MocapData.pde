@@ -25,7 +25,9 @@ class MocapData {
       
       while(jIter.hasNext()){
         Map.Entry<String, float[]> joint = jIter.next();
-        joint.getValue()[1] = -1 * joint.getValue()[1];
+        joint.getValue()[0] = scale * joint.getValue()[0];
+        joint.getValue()[1] = -1 * scale * joint.getValue()[1];
+        joint.getValue()[2] = scale * joint.getValue()[2];
       }
     }
   }  
@@ -39,10 +41,10 @@ class MocapData {
     
 }
 
-class Frame {
+public class Frame {
   // Represents an entire "body" of mocap joints
   //  limited here to two joints
-  Map<String, float[]> joints = new HashMap();
+  private Map<String, float[]> joints = new HashMap();
   
   Frame(JSONObject frameJSON) {
     Iterator<String> jointLabels = frameJSON.keyIterator();
@@ -59,4 +61,18 @@ class Frame {
       }
     }
   }  
+  
+  public float[] getCoordsOfJoint(String jointLabel){
+    return joints.get(jointLabel);
+  }
+  
+  public float[] getCoordsOfConjoinedJoint(String origJoint){
+    for(String j : joints.keySet()){
+      if(! j.equals(origJoint)){
+        return getCoordsOfJoint(j);
+      }
+    }
+    return null;
+  }
+  
 }

@@ -1,12 +1,18 @@
-
+import java.util.function.*;
 
 abstract class DrawingStrategy { 
    protected boolean shouldDrawAll = false;
-   abstract void drawPoints(MocapData data);
    protected PApplet window;
+   protected String jointFocus;
+   protected HighlightWhich highlightWhich; 
    
-   public DrawingStrategy(PApplet window){
+   
+   abstract void drawPoints(MocapData data);
+   
+   public DrawingStrategy(PApplet window, String jointFocus, HighlightWhich which){
      this.window = window;
+     highlightWhich = which;
+     this.jointFocus = jointFocus;
    }
    
    public void handleToggleDrawAmount(){
@@ -71,6 +77,95 @@ abstract class DrawingStrategy {
      drawBall(THORAX); 
   }
 }
+
+public enum HighlightWhich {
+  DIRECT,
+  CONTROLLER_LEAD
+}
+
+
+
+class DrawPoints extends DrawingStrategy {
+   private float percentageToDraw = 0.2;
+   
+   public DrawPoints(PApplet window, String jointFocus, HighlightWhich which){
+     super(window, jointFocus, which); 
+   }
+   
+   public void drawPoints(MocapData data){
+     int countToIgnore = (int) (1 / percentageToDraw);
+     int countCycler = 0;
+     
+     window.noLights();
+     
+     Iterator<Frame> frameIt = data.iterator();
+     
+     while(frameIt.hasNext()) {
+       Frame curFrame = frameIt.next();
+       
+       if(shouldDrawAll) {
+          drawDataPoint(curFrame); 
+          
+       } else {
+         if(countCycler % countToIgnore == 0) {
+           drawDataPoint(curFrame);
+         }
+  
+         countCycler++;
+       }
+     }
+   }
+   
+   void drawDataPoint(Frame frame) {    
+
+     float[] coordsForHighlightCheck;
+     
+     if(highlightWhich == HighlightWhich.DIRECT) {
+        coordsForHighlightCheck = frame.getCoordsOfJoint(jointFocus); 
+     } else {
+        // HightlightWhich.CONTROLLER_LEAD
+        coordsForHighlightCheck = frame.getCoordsOfJoint(controller.getJoint()); 
+     }
+     
+     if(selector.isWithinRegion(coordsForHighlightCheck)){
+        window.stroke(220, 0, 0);
+     } else {
+        window.stroke(000);
+     }
+     
+     drawPoint(frame.getCoordsOfJoint(jointFocus));
+     
+     /*
+     if(selector.isWithinRegion(frame.getCoordsOfJoint(controller.getJoint()))){
+        window.stroke(220, 0, 0);
+        
+        if(highlightWhich == HighlightWhich.DIRECT) {
+            drawPoint(frame.getCoordsOfJoint(jointFocus));
+        } else { // HightlightWhich.CONTROLLER_LEAD
+            drawPoint(frame.getCoordsOfConjoinedJoint(jointFocus));
+        }
+       
+       
+     }
+     
+     window.stroke(000);
+     drawPoint(frame.getCoordsOfJoint(jointFocus));
+     */
+   }
+   
+   void drawPoint(float[] coords) {
+       window.point(coords[0], coords[1], coords[2]);  
+   }
+   
+   void drawPoint(float x, float y, float z){
+       window.point(x, y, z);      
+   }
+   
+   public void handleToggleDrawAmount(){
+      shouldDrawAll = !shouldDrawAll;
+   }
+}
+
 /*
 class DrawEveryPoint extends DrawingStrategy {
   
@@ -138,52 +233,3 @@ class SimpleSpheres extends DrawingStrategy {
    }
 }
 */
-
-class DrawPoints extends DrawingStrategy {
-   private float percentageToDraw = 0.2;
-   private String jointFocus = JOINT_A;
-   
-   public DrawPoints(PApplet window){
-     super(window); 
-   }
-   
-   public void drawPoints(MocapData data){
-     int countToIgnore = (int) (1 / percentageToDraw);
-     int countCycler = 0;
-     
-     window.noLights();
-     
-     Iterator<Frame> frameIt = data.iterator();
-     
-     while(frameIt.hasNext()) {
-       Frame curFrame = frameIt.next();
-       
-       if(shouldDrawAll) {
-          drawDataPoint(curFrame); 
-          
-       } else {
-         if(countCycler % countToIgnore == 0) {
-           drawDataPoint(curFrame);
-         }
-  
-         countCycler++;
-       }
-     }
-   }
-   
-   void drawDataPoint(Frame frame) {    
-     window.stroke(000);
-     
-     float[] curJointCoords = frame.joints.get(jointFocus);
-     drawPoint(curJointCoords[0], curJointCoords[1], curJointCoords[2]);
-   }
-   
-   
-   void drawPoint(float x, float y, float z){
-       window.point(scale*x, scale*y, scale*z);      
-   }
-   
-   public void handleToggleDrawAmount(){
-      shouldDrawAll = !shouldDrawAll;
-   }
-}
