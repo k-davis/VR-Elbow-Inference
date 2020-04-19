@@ -20,9 +20,10 @@ public class Controller {
            
     drawer = new DrawPoints(parent, JOINT_A, HighlightWhich.DIRECT);
     
-    selector = new SphereRegion(25, -25, 25, 5);
+    selector = new SphereRegion(25, -25, 25, 3);
     
     eventManager.addListener(Events.SPACE_PRESS, new Runnable() {public void run(){handleToggleDrawAmount();}});
+    eventManager.addListener(Events.F_PRESS, new Runnable() {public void run(){switchJoint();}});
   }
   
   public void draw() {
@@ -39,6 +40,10 @@ public class Controller {
   }
   
   public String getJoint(){
-    return JOINT_A; 
+    return drawer.getJointFocus(); 
+  }
+  
+  public void switchJoint(){
+    drawer.switchJointFocus();
   }
 }

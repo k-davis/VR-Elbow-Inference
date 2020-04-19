@@ -18,8 +18,8 @@ Controller controller;
 EventManager eventManager;
 SphereRegion selector;
 
-String JOINT_A = "lradius";
-String JOINT_B = "lhumerus";
+String JOINT_A = "lhumerus";
+String JOINT_B = "lradius";
 
 void settings(){
    size(800, 800,P3D);
@@ -78,6 +78,14 @@ void keyPressed(){
     case 'z':
     case 'Z':
       eventManager.trigger(Events.Z_PRESS);
+      break;
+    case 'x':
+    case 'X':
+      eventManager.trigger(Events.X_PRESS);
+      break;
+    case 'f':
+    case 'F':
+      eventManager.trigger(Events.F_PRESS);
       break;
   };
   

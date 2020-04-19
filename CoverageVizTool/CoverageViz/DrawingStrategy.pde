@@ -5,7 +5,7 @@ abstract class DrawingStrategy {
    protected PApplet window;
    protected String jointFocus;
    protected HighlightWhich highlightWhich; 
-   
+   protected boolean shouldDrawJointConnection = false;
    
    abstract void drawPoints(MocapData data);
    
@@ -13,6 +13,21 @@ abstract class DrawingStrategy {
      this.window = window;
      highlightWhich = which;
      this.jointFocus = jointFocus;
+     
+     if(which == HighlightWhich.CONTROLLER_LEAD)
+       eventManager.addListener(Events.X_PRESS, new Runnable() {public void run(){shouldDrawJointConnection = !shouldDrawJointConnection;}});
+   }
+   
+   public String getJointFocus(){
+     return jointFocus;
+   }
+   
+   public void switchJointFocus(){
+     if(jointFocus.equals(JOINT_A)){
+       jointFocus = JOINT_B;
+     } else {
+       jointFocus = JOINT_A;
+     }
    }
    
    public void handleToggleDrawAmount(){
@@ -116,41 +131,43 @@ class DrawPoints extends DrawingStrategy {
      }
    }
    
-   void drawDataPoint(Frame frame) {    
-
-     float[] coordsForHighlightCheck;
-     
+   void drawDataPoint(Frame frame) {
+     // primary refers to the displayed joints of the current window
+     //  secondary refers to the joint of the other window
+     float[] primaryCoords = frame.getCoordsOfJoint(jointFocus);
+     float[] secondaryCoords = frame.getCoordsOfConjoinedJoint(jointFocus);
      if(highlightWhich == HighlightWhich.DIRECT) {
-        coordsForHighlightCheck = frame.getCoordsOfJoint(jointFocus); 
+       // draw selected joints within selector as different color 
+             
+       if(selector.isWithinRegion(primaryCoords)){
+          window.stroke(50, 220, 50);
+          
+       } else {
+          window.stroke(000);
+       }
+       
+       drawPoint(primaryCoords);
+       
      } else {
         // HightlightWhich.CONTROLLER_LEAD
-        coordsForHighlightCheck = frame.getCoordsOfJoint(controller.getJoint()); 
-     }
-     
-     if(selector.isWithinRegion(coordsForHighlightCheck)){
-        window.stroke(220, 0, 0);
-     } else {
-        window.stroke(000);
-     }
-     
-     drawPoint(frame.getCoordsOfJoint(jointFocus));
-     
-     /*
-     if(selector.isWithinRegion(frame.getCoordsOfJoint(controller.getJoint()))){
-        window.stroke(220, 0, 0);
         
-        if(highlightWhich == HighlightWhich.DIRECT) {
-            drawPoint(frame.getCoordsOfJoint(jointFocus));
-        } else { // HightlightWhich.CONTROLLER_LEAD
-            drawPoint(frame.getCoordsOfConjoinedJoint(jointFocus));
-        }
-       
-       
+        if(selector.isWithinRegion(secondaryCoords)) {
+           window.stroke(220, 50, 05);
+           drawPoint(primaryCoords);
+           
+           window.stroke(50, 220, 50);
+           drawPoint(secondaryCoords);
+           
+           if(shouldDrawJointConnection){
+              window.stroke(200, 200, 200, 100);
+              window.line(primaryCoords[0], primaryCoords[1], primaryCoords[2], secondaryCoords[0], secondaryCoords[1], secondaryCoords[2]);
+           }
+        } else {
+          window.stroke(0);
+          drawPoint(primaryCoords);
+        }  
      }
      
-     window.stroke(000);
-     drawPoint(frame.getCoordsOfJoint(jointFocus));
-     */
    }
    
    void drawPoint(float[] coords) {
@@ -159,6 +176,13 @@ class DrawPoints extends DrawingStrategy {
    
    void drawPoint(float x, float y, float z){
        window.point(x, y, z);      
+   }
+   
+   void drawSmallBall(float[] coords) {
+       window.pushMatrix();
+       window.translate(coords[0], coords[1], coords[2]);
+       window.sphere(0.25);
+       window.popMatrix();
    }
    
    public void handleToggleDrawAmount(){

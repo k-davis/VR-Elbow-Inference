@@ -20,15 +20,27 @@ public class Viewer {
            
     viewDrawer = new DrawPoints(parent, JOINT_B, HighlightWhich.CONTROLLER_LEAD);
     eventManager.addListener(Events.SPACE_PRESS, new Runnable() {public void run(){handleToggleDrawAmount();}});
+    eventManager.addListener(Events.F_PRESS, new Runnable() {public void run(){switchJoint();}});
   }
   
   public void draw() {
     viewDrawer.drawUtilityObjects();
+    
     if(dataHolder != null)
       viewDrawer.drawPoints(dataHolder);
+      
+    selector.drawTranslucent(parent);
   }
   
   public void handleToggleDrawAmount() {
     viewDrawer.handleToggleDrawAmount(); 
+  }
+  
+  public String getJoint(){
+    return viewDrawer.getJointFocus(); 
+  }
+  
+  public void switchJoint(){
+    viewDrawer.switchJointFocus();
   }
 }
